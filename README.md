@@ -3,6 +3,8 @@
 > **AI-powered early warning system that detects classroom flu outbreaks hours before the first absence report — using on-device audio AI, RAG-grounded medical knowledge, and Gemma 4's native agentic function calling.**
 
 [![License: CC-BY 4.0](https://img.shields.io/badge/License-CC--BY%204.0-lightgrey.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-fluguard--ai.vercel.app-blue)](https://fluguard-ai.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-LBJyang%2Ffluguard--ai-black?logo=github)](https://github.com/LBJyang/fluguard-ai)
 
 ---
 
@@ -36,11 +38,14 @@ FluGuard AI is a real-time flu surveillance platform for schools:
 
 ### Video Demo
 
-**[VIDEO_LINK]** — 3-minute walkthrough of the full system
+**[▶ Watch on YouTube](https://youtu.be/ZzeVLib-mhg)** — Full system walkthrough
+_(Note: video becomes public on May 17, 2026)_
 
 ### Live Demo
 
-**[DEMO_LINK]** — Try it without any setup (note: AI features require the backend to be running)
+**[fluguard-ai.vercel.app](https://fluguard-ai.vercel.app)** — Try it without any setup
+
+> Backend API: https://fluguard-ai-production.up.railway.app
 
 ---
 
@@ -179,7 +184,7 @@ Both notebooks are self-contained and reproducible on a Kaggle GPU (T4, ~5 min).
 ### Backend
 
 ```bash
-cd deploy/backend
+cd backend
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and set GEMINI_API_KEY=your_key
@@ -189,7 +194,7 @@ uvicorn main:app --reload --port 8000
 ### Frontend
 
 ```bash
-cd deploy/frontend
+cd frontend
 npm install
 cp .env.example .env
 # Edit .env and set VITE_BACKEND_URL=http://localhost:8000
@@ -203,7 +208,6 @@ Open http://localhost:5173
 ## Team
 
 > _[TEAM_MEMBER_1] — Role_
-> _[TEAM_MEMBER_2] — Role_
 
 ---
 
