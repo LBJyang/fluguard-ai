@@ -1,0 +1,16 @@
+# FluGuard AI — Audio Engine Dependencies (Local / Full Installation)
+# 流感卫士 AI — 音频引擎依赖（本地完整版）
+#
+# Install these in addition to requirements.txt to enable:
+#   - /api/cough/detect   (YAMNet cough detection)
+#   - /api/voiceprint/*   (resemblyzer speaker identification)
+#
+# Usage:
+#   pip install -r requirements.txt
+#   pip install -r requirements-audio.txt
+
+tensorflow>=2.17.0
+tensorflow-hub>=0.16.0
+librosa>=0.11.0
+soundfile>=0.12.1
+resemblyzer>=0.1.1.post2
