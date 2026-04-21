@@ -1,11 +1,22 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signInAnonymously, User } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot, getDocFromServer, Timestamp } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+
+// Firebase Web SDK config — these values are public by design (security is via Firestore Rules)
+const firebaseConfig = {
+  projectId: "gen-lang-client-0365703619",
+  appId: "1:337364616404:web:65d5e45652fd7b3aeca741",
+  apiKey: "AIzaSyDYa8AYURb6azcdyqD-lNM1qqbPGpo0YBc",
+  authDomain: "gen-lang-client-0365703619.firebaseapp.com",
+  storageBucket: "gen-lang-client-0365703619.firebasestorage.app",
+  messagingSenderId: "337364616404",
+  measurementId: "",
+};
+const firestoreDatabaseId = "ai-studio-23186f1e-8101-4f15-96b9-a74e32f9c2a8";
 
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
