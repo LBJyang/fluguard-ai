@@ -55,11 +55,12 @@ try:
     from google.genai import types as _gtypes
 
     _GOOGLE_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-    if not _GOOGLE_API_KEY:
-        log.warning("GEMINI_API_KEY is not set — AI features will fail at runtime")
-
-    _google_client = _genai.Client(api_key=_GOOGLE_API_KEY)
-    log.info("Google AI Studio client initialised")
+    if _GOOGLE_API_KEY:
+        _google_client = _genai.Client(api_key=_GOOGLE_API_KEY)
+        log.info("Google AI Studio client initialised")
+    else:
+        log.warning("GEMINI_API_KEY is not set — set it in Railway Variables to enable AI features")
+        _google_client = None  # type: ignore[assignment]
 except ImportError:
     log.error("google-genai package not installed. Run: pip install google-genai")
     _google_client = None  # type: ignore[assignment]
