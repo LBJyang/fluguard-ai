@@ -14,7 +14,7 @@ from pathlib import Path
 log = logging.getLogger("fluguard.audio")
 
 # Path to the trained classifier head (relative to this file)
-CLASSIFIER_PATH = Path(__file__).parent / "models" / "best_cough_classifier.keras"
+CLASSIFIER_PATH = Path(__file__).parent.parent / "cough-detector" / "best_cough_classifier.keras"
 SAMPLE_RATE = 16000
 COUGH_THRESHOLD = 0.50   # standard threshold; v2 model has Recall 99.33% / Precision 96.75% on test set
 VOICEPRINT_THRESHOLD = 0.75   # cosine similarity to accept a match (raised from 0.72)

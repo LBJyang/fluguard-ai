@@ -1,0 +1,164 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required) - Firebase Auth UID
+    //   - email: string (required) - User email
+    //   - role: string (required) - admin, teacher, parent, doctor
+    //   - schoolId: string (optional) - Associated school ID
+    //   - classroomId: string (optional) - Associated classroom ID
+    //   - createdAt: timestamp (optional) - Creation time
+    //
+    // Collection: schools
+    // Document ID: {schoolId}
+    // Fields:
+    //   - name: string (required) - School name
+    //   - district: string (required) - School district
+    //   - address: string (optional) - School address
+    //
+    // Collection: schools/{schoolId}/classrooms
+    // Document ID: {classroomId}
+    // Fields:
+    //   - schoolId: string (required) - School ID
+    //   - name: string (required) - Classroom name
+    //   - grade: string (required) - Grade level
+    //   - studentCount: number (optional) - Number of students
+    //   - fluRiskLevel: string (optional) - low, medium, high
+    //
+    // Collection: schools/{schoolId}/classrooms/{classroomId}/events
+    // Document ID: {eventId}
+    // Fields:
+    //   - classroomId: string (required) - Classroom ID
+    //   - timestamp: timestamp (required) - Event time
+    //   - intensity: number (optional) - Cough intensity
+    //   - confidence: number (optional) - Detection confidence
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == "contest@example.com")) ||
+         request.auth.token.email == "yangfan6262008@gmail.com");
+    }
+
+    function isTeacherAtSchool(schoolId) {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isAuthenticated() && user.role == 'teacher' && user.schoolId == schoolId;
+    }
+
+    function isDoctor() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.uid is string && 
+             isValidEmail(data.email) &&
+             data.role in ['admin', 'teacher', 'parent', 'doctor', 'principal', 'bureau', 'student'];
+    }
+
+    function isValidSchool(data) {
+      return data.keys().hasAll(['name', 'district']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.district is string && data.district.size() > 0;
+    }
+
+    function isValidClassroom(data) {
+      return data.keys().hasAll(['schoolId', 'name', 'grade']) &&
+             data.schoolId is string &&
+             data.name is string && data.name.size() > 0 &&
+             data.grade is string;
+    }
+
+    function isValidCoughEvent(data) {
+      return data.keys().hasAll(['classroomId', 'timestamp']) &&
+             data.classroomId is string &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['name', 'studentId', 'role']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.studentId is string &&
+             data.role == 'student';
+    }
+
+    function isValidHealthCheckin(data) {
+      return data.keys().hasAll(['userId', 'date', 'feeling']) &&
+             data.userId is string &&
+             data.date is string &&
+             data.feeling in ['good', 'okay', 'unwell', 'sick'];
+    }
+
+    // ===============================================================
+    // Match Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isAuthenticated(); // Allow all authenticated users to read profiles for collaboration
+      allow create: if isAuthenticated() && uid == request.auth.uid && isValidUser(request.resource.data) && (request.resource.data.role != 'admin' || isAdmin());
+      allow update: if isAuthenticated() && (isOwner(uid) || isAdmin()) && isValidUser(request.resource.data) && (isAdmin() || (request.resource.data.role == resource.data.role && request.resource.data.uid == resource.data.uid));
+    }
+
+    match /students/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && userId == request.auth.uid && isValidStudent(request.resource.data);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidStudent(request.resource.data);
+    }
+
+    match /healthCheckins/{checkinId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidHealthCheckin(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /schools/{schoolId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+
+      match /classrooms/{classroomId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if isAdmin() || isTeacherAtSchool(schoolId);
+
+        match /students/{studentId} {
+          allow read: if isAuthenticated();
+          allow create, update, delete: if isAdmin() || isTeacherAtSchool(schoolId);
+        }
+
+        match /events/{eventId} {
+          allow read: if isAuthenticated();
+          allow create: if isAuthenticated(); // Sensors can create events
+          allow update, delete: if isAdmin();
+        }
+      }
+    }
+  }
+}

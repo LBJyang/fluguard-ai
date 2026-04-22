@@ -1,0 +1,11 @@
+# Training data — large, downloadable, do not commit
+dev-clean.tar.gz
+librispeech_dev_clean/
+finetune_embeddings.npz
+
+# Personal cough recordings — privacy
+my_coughs/
+
+# Old / backup models
+*_backup.keras
+*_v2.keras

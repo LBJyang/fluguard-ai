@@ -1,0 +1,5 @@
+{
+  "name": "流感卫士 (FluGuard AI)",
+  "description": "基于教室内咳嗽声监测的校园流感预警与防控系统，通过AI声纹识别实现流感流行趋势的早期预警与精准防控。",
+  "requestFramePermissions": ["microphone", "geolocation"]
+}

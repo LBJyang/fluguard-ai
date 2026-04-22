@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user information and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "teacher", "parent", "doctor", "principal", "bureau", "student"] },
+        "schoolId": { "type": "string", "description": "Associated school ID" },
+        "classroomId": { "type": "string", "description": "Associated classroom ID" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "School": {
+      "title": "School",
+      "description": "Represents a school in the system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "district": { "type": "string" },
+        "contactEmail": { "type": "string", "format": "email" }
+      },
+      "required": ["name", "district"]
+    },
+    "Classroom": {
+      "title": "Classroom",
+      "description": "Represents a specific classroom within a school.",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "name": { "type": "string" },
+        "grade": { "type": "string" },
+        "studentCount": { "type": "integer" },
+        "lastCoughCount": { "type": "integer" },
+        "fluRiskLevel": { "type": "string", "enum": ["low", "medium", "high"] }
+      },
+      "required": ["schoolId", "name", "grade"]
+    },
+    "CoughEvent": {
+      "title": "Cough Event",
+      "description": "A single detected cough event.",
+      "type": "object",
+      "properties": {
+        "classroomId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "intensity": { "type": "number" },
+        "duration": { "type": "number" },
+        "confidence": { "type": "number" },
+        "studentId": { "type": "string" }
+      },
+      "required": ["classroomId", "timestamp"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Represents a student in a classroom.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "studentId": { "type": "string" },
+        "grade": { "type": "string" },
+        "class": { "type": "string" },
+        "school": { "type": "string" },
+        "parentId": { "type": "string" },
+        "role": { "type": "string", "enum": ["student"] },
+        "avatar": { "type": "string" },
+        "healthPoints": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "studentId", "role"]
+    },
+    "HealthCheckin": {
+      "title": "Health Checkin",
+      "description": "Daily health check-in record for a student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "feeling": { "type": "string", "enum": ["good", "okay", "unwell", "sick"] },
+        "symptoms": { "type": "array", "items": { "type": "string" } },
+        "temperature": { "type": "number" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "feeling"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System notification for users.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["info", "warning", "advice"] },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "time": { "type": "string" },
+        "read": { "type": "boolean" },
+        "userId": { "type": "string" },
+        "classId": { "type": "string" }
+      },
+      "required": ["type", "title", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/students/{userId}": {
+      "schema": "Student",
+      "description": "Student user profiles"
+    },
+    "/healthCheckins/{checkinId}": {
+      "schema": "HealthCheckin",
+      "description": "Daily health check-ins"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "System notifications"
+    },
+    "/schools/{schoolId}": {
+      "schema": "School",
+      "description": "School information"
+    },
+    "/schools/{schoolId}/classrooms/{classroomId}": {
+      "schema": "Classroom",
+      "description": "Classrooms in a school"
+    },
+    "/schools/{schoolId}/classrooms/{classroomId}/students/{studentId}": {
+      "schema": "Student",
+      "description": "Students in a classroom"
+    },
+    "/schools/{schoolId}/classrooms/{classroomId}/events/{eventId}": {
+      "schema": "CoughEvent",
+      "description": "Cough events in a classroom"
+    }
+  }
+}

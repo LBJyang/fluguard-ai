@@ -49,17 +49,28 @@ _(Note: video becomes public on May 17, 2026)_
 
 ### Run Locally (Fully Offline)
 
-The [`local-run/`](local-run/) directory contains the **original offline version** —
-Gemma 4 via Ollama, ChromaDB RAG, YAMNet cough detection, all running on-device with zero cloud dependency.
+The [`local-run/`](local-run/) directory contains the **fully offline version** —
+Gemma 4 E4B via Ollama, ChromaDB RAG, YAMNet cough detection, all running on-device with zero cloud dependency and no API key required.
+
+**Prerequisites:** Python 3.10+, Node.js 18+, [Ollama](https://ollama.com/download)
 
 ```bash
-# Prerequisites: Ollama installed + ollama pull gemma4:e4b
 git clone https://github.com/LBJyang/fluguard-ai
 cd fluguard-ai/local-run
-bash start.sh    # starts backend + frontend, opens browser
+
+# Pull the model once (~2.5 GB)
+ollama pull gemma4:e4b
+
+# Start everything — installs all dependencies automatically on first run
+bash start.sh
 ```
 
-See [`local-run/README.md`](local-run/README.md) for full setup instructions.
+- Frontend → http://localhost:3000
+- Backend API → http://localhost:8000
+
+> **Note:** After startup, the backend pre-generates AI reports for all roles in the background (1–3 min). Wait for `=== All role reports cached ===` in the backend terminal before testing reports — after that, all report clicks return instantly.
+
+See [`local-run/README.md`](local-run/README.md) for login accounts, architecture details, and FAQ.
 
 ---
 
