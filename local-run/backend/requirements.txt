@@ -1,0 +1,34 @@
+# FluGuard AI Backend Dependencies
+# 流感卫士 AI 后端依赖
+
+# ── Web Framework ──────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# ── HTTP Client (for Ollama + Open-Meteo) ────────────────────────────────
+httpx>=0.28.0
+
+# ── Data Validation ───────────────────────────────────────────────────────
+pydantic>=2.0.0
+
+# ── RAG: Vector Store ─────────────────────────────────────────────────────
+chromadb>=0.5.0
+
+# ── RAG: Embeddings (multilingual, supports Chinese + English) ───────────
+# Downloads paraphrase-multilingual-MiniLM-L12-v2 (~420 MB) on first run
+sentence-transformers>=3.3.0
+
+# ── Audio: Cough Detection (YAMNet + trained head) ────────────────────────
+tensorflow>=2.17.0           # Keras model loading + YAMNet inference (use tensorflow-cpu on Intel/Linux)
+tensorflow-hub>=0.16.0       # YAMNet from TF Hub (cached after first download)
+librosa>=0.11.0              # Audio loading & resampling
+soundfile>=0.12.1            # librosa WAV backend
+
+# ── Audio: Voiceprint Recognition ─────────────────────────────────────────
+resemblyzer>=0.1.1.post2     # GE2E speaker encoder (~17 MB model)
+
+# ── File Upload Support ────────────────────────────────────────────────────
+python-multipart>=0.0.9      # FastAPI UploadFile support
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0

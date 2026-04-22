@@ -47,6 +47,20 @@ _(Note: video becomes public on May 17, 2026)_
 
 > Backend API: https://fluguard-ai-production.up.railway.app
 
+### Run Locally (Fully Offline)
+
+The [`local-run/`](local-run/) directory contains the **original offline version** —
+Gemma 4 via Ollama, ChromaDB RAG, YAMNet cough detection, all running on-device with zero cloud dependency.
+
+```bash
+# Prerequisites: Ollama installed + ollama pull gemma4:e4b
+git clone https://github.com/LBJyang/fluguard-ai
+cd fluguard-ai/local-run
+bash start.sh    # starts backend + frontend, opens browser
+```
+
+See [`local-run/README.md`](local-run/README.md) for full setup instructions.
+
 ---
 
 ## Architecture
