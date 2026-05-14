@@ -7,4 +7,6 @@ node_modules/
 dist/
 *.egg-info/
 .venv/
+venv/
 frontend/firebase-applet-config.json
+voiceprint_profiles.npz
