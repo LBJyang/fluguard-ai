@@ -100,10 +100,20 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+function normalizeBackendUrl(rawUrl?: string) {
+  const value = rawUrl?.trim() ?? '';
+  if (!value) return 'http://localhost:8000';
+  const withoutTrailingSlash = value.replace(/\/+$/, '');
+  if (/^https?:\/\//i.test(withoutTrailingSlash)) {
+    return withoutTrailingSlash;
+  }
+  return `https://${withoutTrailingSlash.replace(/^\/+/, '')}`;
+}
+
 // --- FluGuard AI Backend (Railway) ---
 // VITE_BACKEND_URL is set at build time via Vercel environment variables.
 // Falls back to localhost:8000 for local development.
-const FLUGUARD_API = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const FLUGUARD_API = normalizeBackendUrl(import.meta.env.VITE_BACKEND_URL);
 
 /**
  * Call the FluGuard AI backend (FastAPI → Gemma 4 via Google AI Studio).
@@ -2358,6 +2368,7 @@ const __agentReportCache: Record<string, { report: AgentReport; generatedAt: str
 function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfile, classrooms: Classroom[] }) {
   const cachedEntry = __agentReportCache[user.role];
   const [report, setReport] = useState<AgentReport | null>(cachedEntry?.report ?? null);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [executedActions, setExecutedActions] = useState<Set<number>>(new Set());
   const [generatedAt, setGeneratedAt] = useState<string | null>(cachedEntry?.generatedAt ?? null);
@@ -2370,9 +2381,11 @@ function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfil
       const c = __agentReportCache[user.role];
       setReport(c.report);
       setGeneratedAt(c.generatedAt);
+      setReportError(null);
       return;
     }
     setIsGenerating(true);
+    setReportError(null);
     try {
       if (!forceRefresh) {
         // Try backend cache — instant response
@@ -2391,6 +2404,7 @@ function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfil
           };
           setReport(r);
           setGeneratedAt(data.generated_at ?? null);
+          setReportError(null);
           __agentReportCache[user.role] = { report: r, generatedAt: data.generated_at ?? null };
           return;
         }
@@ -2416,9 +2430,17 @@ function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfil
       const ts = new Date().toISOString();
       setReport(r);
       setGeneratedAt(ts);
+      setReportError(null);
       __agentReportCache[user.role] = { report: r, generatedAt: ts };
     } catch (error) {
       console.error('Agent report failed:', error);
+      setReport(null);
+      setGeneratedAt(null);
+      setReportError(
+        error instanceof Error
+          ? error.message
+          : 'AI report is temporarily unavailable. Please refresh in a moment.'
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -2436,12 +2458,14 @@ function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfil
     if (cached) {
       setReport(cached.report);
       setGeneratedAt(cached.generatedAt);
+      setReportError(null);
       setIsGenerating(false);
       return;
     }
     // No cache for this role → clear stale report from previous role and fetch
     setReport(null);
     setGeneratedAt(null);
+    setReportError(null);
     loadReport();
   }, [user.role]);
 
@@ -2578,6 +2602,14 @@ function AgenticDashboard({ user, classrooms }: { key?: string, user: UserProfil
             <div className="text-2xl font-black text-slate-900">Gemma AI Reasoning...</div>
             <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">Fusing Multi-modal Data / 多模态数据融合推理中</div>
           </div>
+        </div>
+      ) : reportError ? (
+        <div className="p-10 bg-rose-50 border border-rose-200 rounded-[32px] text-center space-y-4">
+          <div className="text-xl font-black text-rose-700">AI Report Unavailable / AI 报告暂时不可用</div>
+          <p className="text-sm text-rose-600 font-medium max-w-3xl mx-auto break-words">{reportError}</p>
+          <p className="text-xs text-rose-500 font-bold uppercase tracking-widest">
+            Backend: {FLUGUARD_API}
+          </p>
         </div>
       ) : report && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
