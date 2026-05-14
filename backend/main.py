@@ -110,7 +110,7 @@ async def _pregenerate_all_reports():
     for role in ["teacher", "principal", "bureau", "parent"]:
         try:
             req = ReportRequest(role=role, system_prompt="", env_data={}, classrooms=[])
-            result = await generate_report(req)
+            result = await _generate_report_impl(req, allow_ai=False)
             from datetime import datetime, timezone
             report_cache[role] = {
                 **result.dict(),
@@ -476,16 +476,29 @@ async def get_cached_report(role: str):
     """
     if role in report_cache:
         return report_cache[role]
-    raise HTTPException(
-        status_code=202,
-        detail=f"Report for role '{role}' is still being generated, please retry in a moment.",
-    )
+
+    # If startup pre-generation has not finished yet, synthesize a deterministic
+    # fallback report on demand so the frontend never has to wait for a long
+    # live AI generation request on first load.
+    req = ReportRequest(role=role, system_prompt="", env_data={}, classrooms=[])
+    result = await _generate_report_impl(req, allow_ai=False)
+    from datetime import datetime, timezone
+    payload = {
+        **result.dict(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    report_cache[role] = payload
+    return payload
 
 
 # ─── /api/report ─────────────────────────────────────────────────────────────
 
 @app.post("/api/report", response_model=ReportResponse)
 async def generate_report(req: ReportRequest):
+    return await _generate_report_impl(req, allow_ai=True)
+
+
+async def _generate_report_impl(req: ReportRequest, allow_ai: bool = True):
     """
     Generate a rich flu risk report.
 
@@ -724,28 +737,42 @@ YAMNet 咳嗽检测系统 24h 实时数据 / YAMNet Cough Detection System (24h)
 
 输出（中文一句 + 英文一句）:"""
 
-    try:
-        log.info("Google AI Studio call: summary")
-        summary_msg = await call_google_ai(
-            [{"role": "user", "content": summary_prompt}],
-            use_tools=False,
-        )
-        summary = summary_msg.get("content", "").strip()
+    summary = ""
+    prediction = ""
+    if allow_ai:
+        import asyncio
+        try:
+            log.info("Google AI Studio call: summary + prediction")
+            summary_msg, pred_msg = await asyncio.gather(
+                asyncio.wait_for(
+                    call_google_ai(
+                        [{"role": "user", "content": summary_prompt}],
+                        use_tools=False,
+                    ),
+                    timeout=12,
+                ),
+                asyncio.wait_for(
+                    call_google_ai(
+                        [{"role": "user", "content": prediction_prompt}],
+                        use_tools=False,
+                    ),
+                    timeout=12,
+                ),
+            )
+            summary = summary_msg.get("content", "").strip()
+            prediction = pred_msg.get("content", "").strip()
 
-        log.info("Google AI Studio call: prediction")
-        pred_msg = await call_google_ai(
-            [{"role": "user", "content": prediction_prompt}],
-            use_tools=False,
-        )
-        prediction = pred_msg.get("content", "").strip()
-
-    except HTTPException:
-        summary = ""
-        prediction = ""
-    except Exception as exc:
-        log.warning(f"AI inference error, using fallback: {exc}")
-        summary = ""
-        prediction = ""
+        except HTTPException:
+            summary = ""
+            prediction = ""
+        except asyncio.TimeoutError:
+            log.warning("AI report generation timed out, using deterministic fallback")
+            summary = ""
+            prediction = ""
+        except Exception as exc:
+            log.warning(f"AI inference error, using fallback: {exc}")
+            summary = ""
+            prediction = ""
 
     # Deterministic fallbacks (rich, bilingual, role-specific)
     FALLBACKS = {
